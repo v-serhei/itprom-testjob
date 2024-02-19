@@ -315,3 +315,6 @@ Caused by: org.h2.mvstore.MVStoreException: The file is locked: E:/_java/jobtest
 	at org.h2.mvstore.SingleFileStore.open(SingleFileStore.java:81)
 	at org.h2.mvstore.MVStore.<init>(MVStore.java:286)
 	... 63 more
+2024-02-19 14:02:28.142825+03:00 jdbc[103]: exception
+org.h2.jdbc.JdbcSQLNonTransientException: Объект уже закрыт
+The object is already closed [90007-224]
