@@ -4,10 +4,9 @@
             <a-list-item>
                 <EmployeeItem
                     :employee="item"
+                    :employee-list="employeeList"
                     :department-list="departmentList"
                     :profession-list="professionList"
-                    :update-item="updateEmployee"
-                    :delete-item="deleteEmployee"
                 />
             </a-list-item>
         </template>
@@ -30,17 +29,6 @@ const props = defineProps({
     },
 });
 
-const updateEmployee = (employeeId: number, employee: EmployeeModel): void => {
-    const index = props.employeeList.findIndex(item => item.id === employeeId);
-    if (index !== -1) {
-        props.employeeList[index] = employee;
-    }
-};
-const deleteEmployee = (employeeId: number): void => {
-    const index = props.employeeList?.findIndex(item => item.id === employeeId);
-    if (index !== -1) {
-        props.employeeList?.splice(index, 1);
-    }
-};
+
 
 </script>

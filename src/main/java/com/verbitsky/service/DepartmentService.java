@@ -33,8 +33,7 @@ public class DepartmentService
     @Override
     public DepartmentDto saveObject(DepartmentDto objectToSave) {
         Long parentDepartmentId = objectToSave.getParentDepartmentId();
-
-        if (repository.findById(parentDepartmentId).isPresent()) {
+        if (parentDepartmentId == null || repository.findById(parentDepartmentId).isPresent()) {
             return super.saveObject(objectToSave);
         } else {
             throw new IllegalArgumentException("Can't save department: wrong parent department id");

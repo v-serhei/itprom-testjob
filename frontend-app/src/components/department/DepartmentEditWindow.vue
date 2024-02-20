@@ -3,6 +3,13 @@
         <a-button @click="showModal">Edit</a-button>
         <a-modal :open="open" width="700px" title="Edit department" :confirm-loading="confirmLoading"
                  @ok="handleOk" @cancel="handleCancel">
+            <hr/>
+            <a-radio-group v-model:value="editMode" name="radioGroup">
+                <a-radio value='1'>Edit</a-radio>
+                <a-radio value='2'>Create new</a-radio>
+            </a-radio-group>
+            <hr style="margin-bottom: 30px"/>
+
             <a-form layout="horizontal" :model="formState" v-bind="formItemLayout">
                 <a-form-item label="Department name">
                     <a-input :value="editedDepartmentName" @input="editedDepartmentName = $event.target.value"
@@ -23,7 +30,7 @@
                     </a-select>
                 </a-form-item>
             </a-form>
-            <a-alert v-if="updateError" :message="updateError" type="error" show-icon/>
+            <a-alert v-if="errorLabel" :message="errorLabel" type="error" show-icon/>
         </a-modal>
     </div>
 </template>
@@ -31,7 +38,7 @@
 <script lang="ts" setup>
 import type {UnwrapRef} from 'vue';
 import {computed, onMounted, ref} from 'vue';
-import {DepartmentModel} from "@/appModel";
+import {DepartmentModel, ProfessionModel} from "@/appModel";
 import fetchApi from "@/appApiFunctions";
 
 const props = defineProps({
@@ -45,10 +52,6 @@ const props = defineProps({
     },
     departmentList: {
         type: Object as () => Array<DepartmentModel>,
-    },
-    updateDepartment: {
-        type: Function,
-        required: true
     }
 });
 
@@ -68,7 +71,8 @@ const editedDepartmentName = ref<string>('');
 const editedDepartmentNote = ref<string>('');
 const editedDepartmentParentId = ref<number | undefined | null>(undefined);
 const departmentId = ref<number | undefined>(undefined);
-const updateError = ref<string>("");
+const errorLabel = ref<string>("");
+const editMode = ref<string>('1');
 
 const formState: UnwrapRef<FormState> = {
     layout: 'horizontal',
@@ -100,30 +104,40 @@ const showModal = () => {
 };
 
 const handleOk = async () => {
+    const requestData = {
+        name: editedDepartmentName.value,
+        note: editedDepartmentNote.value,
+        parentDepartmentId: editedDepartmentParentId.value
+    };
+
+    const apiUrl = editMode.value === '1' ? `/departments/${departmentId.value}` : '/departments';
+
     try {
-        const response = await fetchApi.put(`/departments/${departmentId.value}`, {
-            name: editedDepartmentName.value,
-            note: editedDepartmentNote.value,
-            parentDepartmentId: editedDepartmentParentId.value
-        });
+        const response = await (editMode.value === '1'
+            ? fetchApi.put(apiUrl, requestData)
+            : fetchApi.post(apiUrl, requestData));
+
         if (response.ok) {
-            props.updateDepartment({
-                id: departmentId.value,
-                name: editedDepartmentName.value,
-                note: editedDepartmentNote.value,
-                parentDepartmentId: editedDepartmentParentId.value
-            });
+            if (editMode.value === '1') {
+                props.departmentList![departmentId.value!] = requestData;
+                modalText.value = 'Creating department';
+            } else {
+                const createdId = (await response.json() as DepartmentModel).id
+                props.departmentList?.push({
+                    id: createdId,
+                    ...requestData
+                });
+                modalText.value = 'Saving changes';
+            }
 
-            modalText.value = 'Saving changes';
             confirmLoading.value = true;
-
             open.value = false;
             confirmLoading.value = false;
         } else {
-            updateError.value = await response.text();
+            errorLabel.value = await response.text();
         }
     } catch (error: any) {
-        updateError.value = error.message;
+        errorLabel.value = error.message;
     }
 };
 
@@ -131,7 +145,7 @@ const handleCancel = () => {
     editedDepartmentName.value = originalDepartmentName.value;
     editedDepartmentNote.value = originalDepartmentNote.value;
     editedDepartmentParentId.value = originalDepartmentParentId.value;
-    updateError.value = "";
+    errorLabel.value = "";
     open.value = false;
 };
 

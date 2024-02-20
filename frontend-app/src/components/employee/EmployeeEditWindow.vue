@@ -3,6 +3,12 @@
         <a-button @click="showModal">Edit</a-button>
         <a-modal :open="open" width="700px" title="Edit employee" :confirm-loading="confirmLoading"
                  @ok="handleOk" @cancel="handleCancel">
+            <hr/>
+            <a-radio-group v-model:value="editMode" name="radioGroup">
+                <a-radio value='1'>Edit</a-radio>
+                <a-radio value='2'>Create new</a-radio>
+            </a-radio-group>
+            <hr style="margin-bottom: 30px"/>
             <a-form layout="horizontal" :model="formState" v-bind="formItemLayout">
                 <a-form-item label="Last name">
                     <a-input :value="editedEmployee.lastName" @input="editedEmployee.lastName = $event.target.value"
@@ -42,7 +48,7 @@
                 </a-form-item>
 
             </a-form>
-            <a-alert v-if="updateError" :message="updateError" type="error" show-icon/>
+            <a-alert v-if="errorLabel" :message="errorLabel" type="error" show-icon/>
         </a-modal>
     </div>
 </template>
@@ -58,6 +64,10 @@ const props = defineProps({
         type: Boolean,
         required: true
     },
+    employeeList: {
+        type: Object as () => Array<EmployeeModel>,
+        required: true
+    },
     employee: {
         type: Object as () => EmployeeModel,
         required: true
@@ -68,10 +78,6 @@ const props = defineProps({
     departmentList: {
         type: Object as () => Array<DepartmentModel>,
     },
-    updateEmployee: {
-        type: Function,
-        required: true
-    }
 });
 
 interface FormState {
@@ -88,9 +94,10 @@ const modalText = ref<string>('Employee edit window');
 const open = ref<boolean>(false);
 const confirmLoading = ref<boolean>(false);
 const employeeId = ref<number | undefined>(undefined);
-const updateError = ref<string>("");
+const errorLabel = ref<string>("");
 const departmentSelectedKey = ref<number | null>(null);
 const professionSelectedKey = ref<number | null>(null);
+const editMode = ref<string>('1');
 
 const formState: UnwrapRef<FormState> = {
     layout: 'horizontal',
@@ -167,42 +174,37 @@ const showModal = () => {
 };
 
 const handleOk = async () => {
+    const { firstName, lastName, middleName, note, profession, department } = editedEmployee.value;
+    const apiUrl = editMode.value === '1' ? `/employees/${employeeId.value}` : '/employees';
+
     try {
-        const response = await fetchApi.put(`/employees/${employeeId.value}`, {
-            firstName: editedEmployee.value.firstName,
-            lastName: editedEmployee.value.lastName,
-            middleName: editedEmployee.value.middleName,
-            note: editedEmployee.value.note,
-            profession: editedEmployee.value.profession,
-            department: editedEmployee.value.department
-        });
+        const response = await (editMode.value === '1'
+            ? fetchApi.put(apiUrl, {firstName, lastName, middleName, note, profession, department }) :
+            fetchApi.post(apiUrl, { firstName, lastName, middleName, note, profession, department }));
         if (response.ok) {
-            props.updateEmployee({
-                id: employeeId.value,
-                firstName: editedEmployee.value.firstName,
-                lastName: editedEmployee.value.lastName,
-                middleName: editedEmployee.value.middleName,
-                note: editedEmployee.value.note,
-                profession: editedEmployee.value.profession,
-                department: editedEmployee.value.department
-            });
+            if (editMode.value === '1') {
+                props.employeeList[employeeId.value!] = editedEmployee.value;
+                modalText.value = 'Saving changes';
+            } else {
+                editedEmployee.value.id = (await response.json() as EmployeeModel).id;
+                props.employeeList?.push(editedEmployee.value);
+                modalText.value = 'Creating new employee';
+            }
 
-            modalText.value = 'Saving changes';
             confirmLoading.value = true;
-
             open.value = false;
             confirmLoading.value = false;
         } else {
-            updateError.value = await response.text();
+            errorLabel.value = await response.text();
         }
     } catch (error: any) {
-        updateError.value = error.message;
+        errorLabel.value = error.message;
     }
 };
 
 const handleCancel = () => {
     editedEmployee.value = originalEmployee.value;
-    updateError.value = "";
+    errorLabel.value = "";
     open.value = false;
 };
 

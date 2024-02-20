@@ -10,7 +10,7 @@
                         <Profession-edit-window
                             :open-modal="false"
                             :profession="profession"
-                            :update-profession="updateProfession"
+                            :profession-list="professionList"
                         />
                         <a-button danger @click="deleteProfession">Delete</a-button>
                     </a-space>
@@ -33,28 +33,20 @@ const props = defineProps({
         type: Object as () => ProfessionModel,
         required: true
     },
-
-    updateItem: {
-        type: Function,
-        required: true
-    },
-
-    deleteItem: {
-        type: Function,
-        required: true
+    professionList: {
+        type: Object as () => Array<ProfessionModel>,
     }
 });
 
 const deleteErrorMessage = ref<string>("");
-const updateProfession = (updatedProfession: ProfessionModel) => {
-    props.updateItem(props.profession.id, updatedProfession);
-};
-
 const deleteProfession = async () => {
     try {
         const response = await fetchApi.delete(`/professions/${props.profession?.id}`);
         if (response.ok) {
-            props.deleteItem(props.profession.id);
+            const index = props.professionList?.findIndex(item => item.id === props.profession?.id)!;
+            if (index !== -1) {
+                props.professionList?.splice(index, 1);
+            }
         } else {
             deleteErrorMessage.value = await response.text();
         }

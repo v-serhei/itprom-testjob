@@ -4,8 +4,7 @@
             <a-list-item :key="item.id">
                 <ProfessionItem
                     :profession="item"
-                    :update-item="updateProfession"
-                    :delete-item="deleteProfession"
+                    :profession-list="professionList"
                 />
             </a-list-item>
         </template>
@@ -21,18 +20,5 @@ const props = defineProps({
         required: true
     }
 });
-
-const updateProfession = (professionId: number, profession: ProfessionModel): void => {
-    const index = props.professionList.findIndex(item => item.id === professionId);
-    if (index !== -1) {
-        props.professionList[index] = profession;
-    }
-};
-const deleteProfession = (professionId: number): void => {
-    const index = props.professionList?.findIndex(item => item.id === professionId);
-    if (index !== -1) {
-        props.professionList?.splice(index, 1);
-    }
-};
 
 </script>

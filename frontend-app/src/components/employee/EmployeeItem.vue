@@ -15,8 +15,8 @@
                             :open-modal="false"
                             :employee="employee"
                             :department-list="departmentList"
+                            :employee-list="employeeList"
                             :profession-list="professionList"
-                            :update-employee="updateEmployee"
                         />
                         <a-button danger @click="deleteEmployee">Delete</a-button>
                     </a-space>
@@ -39,36 +39,28 @@ const props = defineProps({
         type: Object as () => EmployeeModel,
         required: true
     },
-
+    employeeList: {
+        type: Object as () => Array<EmployeeModel>,
+        required: true
+    },
     professionList: {
         type: Object as () => Array<ProfessionModel>,
     },
     departmentList: {
         type: Object as () => Array<DepartmentModel>,
     },
-
-    updateItem: {
-        type: Function,
-        required: true
-    },
-
-    deleteItem: {
-        type: Function,
-        required: true
-    }
 });
 
 const deleteErrorMessage = ref<string>("");
-
-const updateEmployee = (updatedEmployee: EmployeeModel) => {
-    props.updateItem(props.employee.id, updatedEmployee);
-};
 
 const deleteEmployee = async () => {
     try {
         const response = await fetchApi.delete(`/employees/${props.employee?.id}`);
         if (response.ok) {
-            props.deleteItem(props.employee.id);
+            const index = props.employeeList?.findIndex(item => item.id === props.employee?.id);
+            if (index !== -1) {
+                props.employeeList?.splice(index, 1);
+            }
         } else {
             deleteErrorMessage.value = await response.text();
         }
@@ -76,5 +68,4 @@ const deleteEmployee = async () => {
         deleteErrorMessage.value = error.message;
     }
 }
-
 </script>
