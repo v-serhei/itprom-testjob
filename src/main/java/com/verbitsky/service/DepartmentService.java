@@ -59,6 +59,8 @@ public class DepartmentService
                     () -> {
                         throw new IllegalArgumentException("Can't update department: parent department doesn't exists");
                     });
+        } else {
+            entity.setParentDepartmentId(null);
         }
     }
 }
