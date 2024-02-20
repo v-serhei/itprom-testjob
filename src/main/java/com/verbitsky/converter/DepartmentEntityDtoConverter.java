@@ -13,7 +13,7 @@ import com.verbitsky.entity.DepartmentEntity;
 import java.util.Set;
 
 @Component
-class DepartmentEntityDtoConverter implements EntityDtoConverter<DepartmentDto, DepartmentEntity> {
+public class DepartmentEntityDtoConverter implements EntityDtoConverter<DepartmentDto, DepartmentEntity> {
     @Override
     public DepartmentEntity convertToEntity(@NonNull DepartmentDto dto) {
         return DepartmentMapper.INSTANCE.toEntity(dto);
